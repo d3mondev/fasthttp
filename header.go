@@ -51,6 +51,8 @@ type ResponseHeader struct {
 	noDefaultContentType  bool
 	noDefaultDate         bool
 	secureErrorLogMessage bool
+
+	firstByteTime time.Time
 }
 
 // RequestHeader represents HTTP request header.
@@ -1038,6 +1040,7 @@ func (h *ResponseHeader) Reset() {
 	h.SetNoDefaultContentType(false)
 	h.noDefaultDate = false
 	h.resetSkipNormalize()
+	h.firstByteTime = time.Time{}
 }
 
 func (h *ResponseHeader) resetSkipNormalize() {
@@ -2089,12 +2092,16 @@ func (h *ResponseHeader) Read(r *bufio.Reader) error {
 	for {
 		err := h.tryRead(r, n)
 		if err == nil {
+			if h.firstByteTime.IsZero() {
+				h.firstByteTime = time.Now()
+			}
 			return nil
 		}
 		if err != errNeedMore {
 			h.resetSkipNormalize()
 			return err
 		}
+
 		n = r.Buffered() + 1
 	}
 }

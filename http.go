@@ -124,6 +124,9 @@ type Response struct {
 
 	keepBodyBuffer        bool
 	secureErrorLogMessage bool
+
+	// Stats
+	requestSentTime time.Time
 }
 
 // SetHost sets host for the request.
@@ -1162,6 +1165,7 @@ func (resp *Response) Reset() {
 	resp.laddr = nil
 	resp.ImmediateHeaderFlush = false
 	resp.StreamBody = false
+	resp.requestSentTime = time.Time{}
 }
 
 func (resp *Response) resetSkipHeader() {
@@ -1439,6 +1443,7 @@ func (resp *Response) ReadLimitBody(r *bufio.Reader, maxBodySize int) error {
 	if err != nil {
 		return err
 	}
+
 	if resp.Header.StatusCode() == StatusContinue {
 		// Read the next response according to http://www.w3.org/Protocols/rfc2616/rfc2616-sec8.html .
 		if err = resp.Header.Read(r); err != nil {
@@ -2563,4 +2568,12 @@ func readCrLf(r *bufio.Reader) error {
 //	c.DoTimeout(&req, &resp, t)
 func (req *Request) SetTimeout(t time.Duration) {
 	req.timeout = t
+}
+
+func (resp *Response) TimeToFirstByte() time.Duration {
+	return resp.Header.firstByteTime.Sub(resp.requestSentTime)
+}
+
+func (resp *Response) markRequestSent() {
+	resp.requestSentTime = time.Now()
 }

@@ -3024,6 +3024,8 @@ func (t *transport) RoundTrip(hc *HostClient, req *Request, resp *Response) (ret
 		resetConnection = true
 	}
 
+	resp.markRequestSent()
+
 	bw := hc.AcquireWriter(conn)
 	err = req.Write(bw)
 
