@@ -2570,10 +2570,20 @@ func (req *Request) SetTimeout(t time.Duration) {
 	req.timeout = t
 }
 
+// HACK: Return time to first byte
 func (resp *Response) TimeToFirstByte() time.Duration {
 	return resp.Header.firstByteTime.Sub(resp.requestSentTime)
 }
 
+// HACK: Mark time the request was sent
 func (resp *Response) markRequestSent() {
 	resp.requestSentTime = time.Now()
+}
+
+// HACK: Return the raw buffer from which the header was parsed.
+func (resp *Response) HeaderRaw() []byte {
+	if resp.Header.header != nil {
+		return resp.Header.header.B
+	}
+	return nil
 }

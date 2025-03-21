@@ -9,6 +9,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/valyala/bytebufferpool"
 )
 
 const (
@@ -52,7 +54,8 @@ type ResponseHeader struct {
 	noDefaultDate         bool
 	secureErrorLogMessage bool
 
-	firstByteTime time.Time
+	firstByteTime time.Time                  // HACK: timestamp at which the first byte was received
+	header        *bytebufferpool.ByteBuffer // HACK: keep raw header response
 }
 
 // RequestHeader represents HTTP request header.
@@ -2138,6 +2141,15 @@ func (h *ResponseHeader) tryRead(r *bufio.Reader, n int) error {
 	if errParse != nil {
 		return headerError("response", err, errParse, b, h.secureErrorLogMessage)
 	}
+
+	// HACK: Keep a copy of the raw header buffer
+	if h.header == nil {
+		h.header = bytebufferpool.Get()
+	} else {
+		h.header.Reset()
+	}
+	h.header.Set(b[:headersLen])
+
 	mustDiscard(r, headersLen)
 	return nil
 }
