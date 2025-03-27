@@ -912,6 +912,7 @@ func (resp *Response) CopyTo(dst *Response) {
 func (resp *Response) copyToSkipBody(dst *Response) {
 	dst.Reset()
 	resp.Header.CopyTo(&dst.Header)
+	dst.requestSentTime = resp.requestSentTime
 	dst.SkipBody = resp.SkipBody
 	dst.raddr = resp.raddr
 	dst.laddr = resp.laddr
@@ -2582,8 +2583,5 @@ func (resp *Response) markRequestSent() {
 
 // HACK: Return the raw buffer from which the header was parsed.
 func (resp *Response) HeaderRaw() []byte {
-	if resp.Header.header != nil {
-		return resp.Header.header.B
-	}
-	return nil
+	return resp.Header.header
 }

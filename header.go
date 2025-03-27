@@ -9,8 +9,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/valyala/bytebufferpool"
 )
 
 const (
@@ -54,8 +52,8 @@ type ResponseHeader struct {
 	noDefaultDate         bool
 	secureErrorLogMessage bool
 
-	firstByteTime time.Time                  // HACK: timestamp at which the first byte was received
-	header        *bytebufferpool.ByteBuffer // HACK: keep raw header response
+	firstByteTime time.Time // HACK: timestamp at which the first byte was received
+	header        []byte    // HACK: keep raw header response
 }
 
 // RequestHeader represents HTTP request header.
@@ -1044,6 +1042,7 @@ func (h *ResponseHeader) Reset() {
 	h.noDefaultDate = false
 	h.resetSkipNormalize()
 	h.firstByteTime = time.Time{}
+	h.header = h.header[:0]
 }
 
 func (h *ResponseHeader) resetSkipNormalize() {
@@ -1123,6 +1122,9 @@ func (h *ResponseHeader) CopyTo(dst *ResponseHeader) {
 	dst.h = copyArgs(dst.h, h.h)
 	dst.cookies = copyArgs(dst.cookies, h.cookies)
 	dst.trailer = copyTrailer(dst.trailer, h.trailer)
+
+	dst.firstByteTime = h.firstByteTime
+	dst.header = append(dst.header, h.header...)
 }
 
 // CopyTo copies all the headers to dst.
@@ -1133,6 +1135,7 @@ func (h *RequestHeader) CopyTo(dst *RequestHeader) {
 	dst.noHTTP11 = h.noHTTP11
 	dst.connectionClose = h.connectionClose
 	dst.noDefaultContentType = h.noDefaultContentType
+	dst.disableSpecialHeader = h.disableSpecialHeader
 
 	dst.contentLength = h.contentLength
 	dst.contentLengthBytes = append(dst.contentLengthBytes, h.contentLengthBytes...)
@@ -2143,12 +2146,8 @@ func (h *ResponseHeader) tryRead(r *bufio.Reader, n int) error {
 	}
 
 	// HACK: Keep a copy of the raw header buffer
-	if h.header == nil {
-		h.header = bytebufferpool.Get()
-	} else {
-		h.header.Reset()
-	}
-	h.header.Set(b[:headersLen])
+	h.header = h.header[:0]
+	h.header = append(h.header, b[:headersLen]...)
 
 	mustDiscard(r, headersLen)
 	return nil
