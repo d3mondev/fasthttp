@@ -886,6 +886,9 @@ func (req *Request) copyToSkipBody(dst *Request) {
 	req.postArgs.CopyTo(&dst.postArgs)
 	dst.parsedPostArgs = req.parsedPostArgs
 	dst.isTLS = req.isTLS
+	dst.keepBodyBuffer = req.keepBodyBuffer
+	dst.timeout = req.timeout
+	dst.DisableRedirectPathNormalizing = req.DisableRedirectPathNormalizing
 
 	dst.UseHostHeader = req.UseHostHeader
 

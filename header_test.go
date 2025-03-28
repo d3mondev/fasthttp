@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestResponseHeaderAddContentType(t *testing.T) {
@@ -1452,6 +1453,7 @@ func TestResponseHeaderCopyTo(t *testing.T) {
 	h.Set(HeaderContentEncoding, "gzip")
 	h.Set("AAA-BBB", "aaaa")
 	h.Set(HeaderTrailer, "foo, bar")
+	h.firstByteTime = time.Now()
 
 	var h1 ResponseHeader
 	h.CopyTo(&h1)
@@ -1494,6 +1496,7 @@ func TestRequestHeaderCopyTo(t *testing.T) {
 	h.Set("aaaxxx", "123")
 	h.Set(HeaderTrailer, "foo, bar")
 	h.noDefaultContentType = true
+	h.disableSpecialHeader = true
 
 	var h1 RequestHeader
 	h.CopyTo(&h1)

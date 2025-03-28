@@ -123,6 +123,10 @@ func TestRequestCopyTo(t *testing.T) {
 	testRequestCopyTo(t, &req)
 
 	// init
+	req.timeout = 10 * time.Second
+	req.keepBodyBuffer = true
+	req.isTLS = true
+	req.DisableRedirectPathNormalizing = true
 	expectedContentType := "application/x-www-form-urlencoded; charset=UTF-8"
 	expectedHost := "test.com"
 	expectedBody := "0123=56789"
@@ -146,6 +150,7 @@ func TestResponseCopyTo(t *testing.T) {
 	// init resp
 	resp.laddr = zeroTCPAddr
 	resp.SkipBody = true
+	resp.requestSentTime = time.Now()
 	resp.Header.SetStatusCode(200)
 	resp.SetBodyString("test")
 	testResponseCopyTo(t, &resp)
